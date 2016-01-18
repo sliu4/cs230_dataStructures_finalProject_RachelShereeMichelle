@@ -1,0 +1,119 @@
+/****************************************************************************
+  *  FindPathTab.java
+  *  CS 230 Final Project
+  *
+  *  author: Rachel Seo
+  * 
+  *  description of the class
+  * 
+  *****************************************************************************/
+
+import java.io.*;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+
+public class FindPathTab extends JPanel {
+  
+  private JPanel top; // where the map of wellesley will be added
+  private JPanel middle; // where the user will be able to select the origin and destination
+  private JPanel bottom; // where the direction will appear
+  
+  private JLabel direction, origin, destination;
+  private JComboBox originMenu, destinationMenu; // drop-down menu
+  private JButton submitButton;
+  
+  private String vertices[];
+  private WellesleyMap wMap;
+  
+  public FindPathTab() {
+    
+    vertices = new String[]{"Academic Quad","Clapp Library","Keohane Sports Center","Lulu Campus Center","Quint","Science Center","Tower Court"};
+    wMap = new WellesleyMap();
+    
+    // set FindPathTab as border layout
+    BorderLayout bL = new BorderLayout();
+    setLayout(bL);
+    // set a vertical gap
+    bL.setVgap(10);
+    
+    // create an array of Strings that will be added to the option of drop-down menu
+    String[] options = {"...", "Academic Quad","Clapp Library","Keohane Sports Center","Lulu Campus Center","Quint","Science Center","Tower Court"};
+    
+    // initialize top, middle, bottom panels and set the background with appropriatre colors
+    top = new JPanel();
+    top.setBackground(new Color(207, 231, 154));
+    
+    middle = new JPanel();
+    middle.setBackground(new Color(153, 167, 127));
+    
+    bottom = new JPanel();
+    bottom.setBackground(new Color(207, 231, 154));
+ //   bottom.setPreferredSize(new Dimension(850, 200));
+    
+    try {
+      BufferedImage myPic = ImageIO.read(new File("wellesley_campus.png"));
+      JLabel picLabel = new JLabel(new ImageIcon(myPic));
+      top.add(picLabel);
+    } catch (IOException ex) {
+      System.out.println(ex);
+    }
+    
+    
+    origin = new JLabel("Enter origin: ");
+    originMenu = new JComboBox(options);
+    middle.add(origin);
+    middle.add(originMenu);
+    
+    destination = new JLabel("Enter destination: ");
+    destinationMenu = new JComboBox(options);
+    middle.add(destination);
+    middle.add(destinationMenu);
+    
+    submitButton = new JButton("Find the shortest path!");
+    middle.add(submitButton);
+    ButtonListener listener = new ButtonListener();
+    submitButton.addActionListener(listener);
+  
+    direction = new JLabel("Please choose the origin and destination from the drop-down menu");
+    bottom.add(direction);
+    
+    // add each of the top, middle, bottom panel to the appropriate location on the BorderLayout
+    add(top, BorderLayout.NORTH);
+    add(middle, BorderLayout.CENTER);
+    add(bottom, BorderLayout.SOUTH);
+  }
+  
+  
+    
+  // Adds an action to the submitButton so that the action will be performed when the button is pressed
+  private class ButtonListener implements ActionListener {
+    
+    public void actionPerformed (ActionEvent event) {
+      
+      int picked_origin = originMenu.getSelectedIndex(); // get what index the user selected in each of the drop-down menus
+      int picked_destin = destinationMenu.getSelectedIndex();
+     
+      int distance;
+      String origin = vertices[picked_origin-1];
+      System.out.println(origin);
+      String destin = vertices[picked_destin-1];
+      System.out.println(destin);
+      distance = wMap.getShortestPath(origin, destin); // ERROR: incompatible types?
+      
+      // if the user has chosen both the origin and destination
+      if ((picked_origin != 0) && (picked_destin != 0)) {
+        // call some other class that has the direction stored and set text accordingly
+        // ie path finder
+        direction.setText(origin + ", " + destin); // change distance value to String
+      } else {
+        direction.setText("Please enter values for ALL fields.");
+      }
+    }
+  
+}
+}
+
+

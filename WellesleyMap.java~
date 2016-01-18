@@ -1,0 +1,332 @@
+//----------------------------------------------------------
+// WellesleyMap.java
+// CS 230 Final Project
+//
+// author: Sheree Liu, Rachel Seo, Michelle Lu
+//
+// The WellesleyMap object is a weighted graph that contains
+// five vertices (or buildings) on Wellesley's campus, and 
+// the distances between them
+//----------------------------------------------------------
+
+//currently working on getPath method... have to figure out dijkstra's algorithm..
+
+import java.util.Scanner;
+import java.io.*;
+import java.util.*; 
+
+public class WellesleyMap {
+  
+  //instance variables
+  private int n; //num vertices
+  private String[] vertices;
+  private int[][] weightedEdges;
+  
+  private final int DEFAULT_CAPACITY = 7;
+  private final int NOT_FOUND = -1;
+  
+  
+  //constructor
+  public WellesleyMap() {
+    n = DEFAULT_CAPACITY;
+    vertices = new String[]{"Academic Quad","Clapp Library","Keohane Sports Center","Lulu Campus Center","Quint","Science Center","Tower Court"};
+    weightedEdges = new int[DEFAULT_CAPACITY][DEFAULT_CAPACITY];
+    //populate weightedEdges with approximate distances (in feet) between buildings
+    //calculated using google maps
+    weightedEdges[0][5] = 1000; //acaquad and science
+    weightedEdges[5][0] = 1000;
+    weightedEdges[0][3] = 920; //acaquad and lulu
+    weightedEdges[3][0] = 920;
+    weightedEdges[0][1] = 870; //acaquad and clapp
+    weightedEdges[1][0] = 870;
+    weightedEdges[1][3] = 1700; //clapp and lulu
+    weightedEdges[3][1] = 1700;
+    weightedEdges[2][3] = 600; //lulu and ksc
+    weightedEdges[3][2] = 600;
+    weightedEdges[1][5] = 1300; //science and clapp
+    weightedEdges[5][1] = 1300;
+    weightedEdges[2][6] = 1630; //ksc to tower
+    weightedEdges[6][2] = 1630; 
+    weightedEdges[1][6] = 760; //tower to clapp
+    weightedEdges[6][1] = 760; 
+    weightedEdges[2][4] = 1000; //ksc to quint
+    weightedEdges[4][2] = 1000; 
+    weightedEdges[3][4] = 500; //quint to lulu
+    weightedEdges[4][3] = 500; 
+    weightedEdges[0][4] = 1000; //aca to quint
+    weightedEdges[4][0] = 1000; 
+    weightedEdges[4][5] = 1500; //quint to sci
+    weightedEdges[5][4] = 1500; 
+    weightedEdges[3][6] = 1030; //lulu to tower
+    weightedEdges[6][3] = 1030; 
+  }
+  
+  /******************************************************************
+    Returns a string representation of the graph. 
+    ******************************************************************/
+  public String toString() {
+    if (n == 0) {
+      return "Graph is empty";
+    }
+    
+    String result = "";
+    result += "\ni ";
+    
+    for (int i = 0; i < n; i++) {
+      result += "" + vertices[i].substring(0,3);
+      if (i < 10) {
+        result += " ";
+      }
+    }
+    result += "\n";
+    
+    for (int i = 0; i < n; i++) {
+      result += "" + vertices[i].substring(0,3) + " ";
+      
+      for (int j = 0; j < n; j++) {
+        if (weightedEdges[i][j]!=0) {
+          result += weightedEdges[i][j] + " ";
+        } else {
+          result += "- "; //just empty space
+        }
+      }
+      result += "\n";
+    }
+    return result;
+  }
+  
+  /******************************************************************
+    Calculates the shortest path between orig and des using dijsktra's
+    algorithm.
+    ******************************************************************/
+  public int[] getShortestPath (String source,String des) {
+    // LinkedList<String> path = new LinkedList<String>(); //will store the shortest path from orig to des
+    int sourceIndex = getIndex(source);
+    // System.out.println(sourceIndex);
+    int desIndex = getIndex(des);
+    // System.out.println(desIndex);
+    if (sourceIndex!=NOT_FOUND && desIndex!=NOT_FOUND) {
+      int[] dist = new int[DEFAULT_CAPACITY];
+      String[] prev = new String[DEFAULT_CAPACITY];
+      LinkedList<Integer> q = new LinkedList<Integer>(); //stores distances
+      LinkedList<String> v = new LinkedList<String>(); //stores names of vertices
+      dist[sourceIndex] = 0;
+      prev[sourceIndex] = null;
+      
+      for (int i=0;i<n;i++) {
+        if (i!=sourceIndex) {
+          dist[i] = 100000; //assign infinity for each value
+          prev[i] = null; //assign null (or undefined) for each value
+        } 
+        q.add(dist[i]); //add each distance to q
+        v.add(vertices[i]); //add each vertices to v
+      }
+      // System.out.println("v: "+ v);
+      // System.out.println("q: " + q);
+      //q is a list of [0,infinity,infinity,infinity,infinity]
+      //that is, if the origin is the first element in the list
+      //v is a linkedlist form of vertices array
+      
+      while (q.size()!=0) {
+        int indexOfSmallest = findMin(q); //find the smallest num in q
+        // System.out.println("indexOfSmallest " + indexOfSmallest);
+        int u = q.get(indexOfSmallest); //u is a weight
+        String uu = v.get(indexOfSmallest); //uu is the vertex with that weight
+        q.remove(indexOfSmallest); //remove u from q
+        String removed = v.remove(indexOfSmallest); //remove u from v as well
+        System.out.println("removed: " + removed);
+        int removedIndex = getIndex(removed); //finds u's index in vertices
+        System.out.println("removedIndex: " + removedIndex);
+        // System.out.println(vertices[indexOfSmallest]); 
+        LinkedList<String> neighbors = getSuccessors(vertices[removedIndex]); //neighbors of v
+        System.out.println("neighbors: " + neighbors); 
+        // System.out.println("dist[removedIndex]: " + dist[removedIndex]);
+        for (int i=0;i<neighbors.size();i++) {
+          if (v.contains(neighbors.get(i))) { //only do this if neighbor is still in v
+            int alt = dist[removedIndex] + length(vertices[removedIndex],neighbors.get(i)); //dist[u] + length(u,v)
+            System.out.println("dist[removedIndex]: " + dist[removedIndex]);
+            System.out.println("length: " + length(vertices[removedIndex],neighbors.get(i)));
+            System.out.println("alt: " + alt);
+            int index = getIndex(neighbors.get(i)); //find its index in vertices
+            System.out.println("index: "+ index);
+            System.out.println("dist[index]: " + dist[index]);
+            if (alt<dist[index]) { //check to see if alt is less than whats already in dist at index
+              dist[index] = alt;
+              prev[index] = uu; //uu = vertices[removedIndex];
+            }
+          }
+        }
+      }
+      System.out.println();
+      System.out.println("previous array: ");
+      for (int i=0;i<prev.length;i++) {
+        System.out.println(prev[i]);
+      }
+      System.out.println();
+      System.out.println("dist array: ");
+      for (int i=0;i<dist.length;i++) {
+        System.out.println(dist[i]);
+      }
+      System.out.println("dist[desIndex]: " + dist[desIndex]); //distance from source to destination
+      return dist;
+    }
+    //vertices cannot be found
+    throw new IllegalArgumentException("No such vertex index");
+  }
+  
+  /******************************************************************
+    Helper method:
+    Retrieve from a graph the vertices x following vertex v (v->x)
+    and returns them onto a linked list
+    ******************************************************************/
+  private LinkedList<String> getSuccessors(String vertex){
+    LinkedList<String> neighbors = new LinkedList<String>();
+    int v = getIndex(vertex); 
+    if (v == NOT_FOUND) return neighbors; //check if vertex is valid
+    
+    //vertex exists!
+    for (int i = 0; i < n; i++) {
+      if (weightedEdges[v][i]>0) {
+        neighbors.add(vertices[i]); //if there's an edge, add i to linked list
+      }
+    }    
+    return neighbors;    
+  }
+  
+  
+  /******************************************************************
+    Helper method: 
+    Returns the index in a given array that has the smallest value. Will
+    Be used in getShortestPath to find the vertex that has the minimum
+    distance from the source in the pathWeight array.
+    ******************************************************************/
+  private int findMin(LinkedList<Integer> a) {
+    int smallest = a.get(0);
+    int index = 0;
+    for (int i=1;i<a.size();i++) {
+      if (a.get(i)<smallest) {
+        smallest = a.get(i);
+        index = i;
+      }
+    }
+    return index;
+  }
+  
+  /******************************************************************
+    Helper method: 
+    Returns the length between two given vertices 
+    ******************************************************************/
+  private int length(String v1,String v2) {
+    int v1Index = getIndex(v1); // get index of each vertex
+    int v2Index = getIndex(v2);
+    if (v1Index!=NOT_FOUND && v2Index!=NOT_FOUND) { // if they exist
+      return weightedEdges[v1Index][v2Index]; // return weight (length)
+    }
+    //vertices cannot be found
+    throw new IllegalArgumentException("No such vertex index");
+  }
+  
+  /******************************************************************
+    Helper method:
+    Returns the index of a given vertex, if it exists. 
+    ******************************************************************/
+  private int getIndex(String vertex) {
+    for (int i=0;i<n;i++) {
+      if (vertices[i].equals(vertex)) {
+        return i;
+      }
+    }
+    return NOT_FOUND; //return the final variable if vertex doesnt exist
+  }
+  
+  /******************************************************************
+    Main method tests functions
+    ******************************************************************/
+  public static void main(String[] args) {
+    WellesleyMap w = new WellesleyMap();
+    // System.out.println(w);
+    // w.getShortestPath("Academic Quad", "Clapp Library");
+    // System.out.println();
+    w.getShortestPath("Academic Quad", "Keohane Sports Center");
+    // System.out.println();
+    // w.getShortestPath("Academic Quad", "Lulu Campus Center");
+    // System.out.println();
+    // w.getShortestPath("Academic Quad", "Science Center");
+    // System.out.println();
+    // w.getShortestPath("Academic Quad", "Quint");
+    // System.out.println();
+    // w.getShortestPath("Academic Quad", "Tower Court");
+    
+    // w.getShortestPath("Clapp Library", "Academic Quad");
+    // System.out.println();
+    w.getShortestPath("Clapp Library", "Keohane Sports Center");
+    // System.out.println();
+    // w.getShortestPath("Clapp Library", "Lulu Campus Center");
+    // System.out.println();
+    // w.getShortestPath("Clapp Library", "Science Center");
+    // System.out.println();
+    // w.getShortestPath("Clapp Library", "Quint");
+    // System.out.println();
+    // w.getShortestPath("Clapp Library", "Tower Court");
+    
+    w.getShortestPath("Keohane Sports Center", "Academic Quad");
+    // System.out.println();
+    w.getShortestPath("Keohane Sports Center", "Clapp Library");
+    // System.out.println();
+    // w.getShortestPath("Keohane Sports Center", "Lulu Campus Center");
+    // System.out.println();
+    // w.getShortestPath("Keohane Sports Center", "Science Center");
+    // System.out.println();
+    // w.getShortestPath("Keohane Sports Center", "Quint");
+    // System.out.println();
+    // w.getShortestPath("Keohane Sports Center", "Tower Court");
+    
+    // w.getShortestPath("Lulu Campus Center","Academic Quad");
+    // System.out.println();
+    // w.getShortestPath("Lulu Campus Center","Clapp Library");
+    // System.out.println();
+    // w.getShortestPath("Lulu Campus Center","Keohane Sports Center");
+    // System.out.println();
+    // w.getShortestPath("Lulu Campus Center","Quint");
+    // System.out.println();
+    // w.getShortestPath("Lulu Campus Center","Science Center");
+    // System.out.println();
+    // w.getShortestPath("Lulu Campus Center","Tower Court");
+    
+    // w.getShortestPath("Quint", "Academic Quad");
+    // System.out.println();
+    // w.getShortestPath("Quint", "Clapp Library");
+    // System.out.println();
+    // w.getShortestPath("Quint", "Keohane Sports Center");
+    // System.out.println();
+    // w.getShortestPath("Quint", "Lulu Campus Center");
+    // System.out.println(); 
+    // w.getShortestPath("Quint", "Science Center");
+    // System.out.println();
+    // w.getShortestPath("Quint", "Tower Court");
+    
+    // w.getShortestPath("Science Center", "Academic Quad");
+    // System.out.println();
+    // w.getShortestPath("Science Center", "Clapp Library");
+    // System.out.println();
+    w.getShortestPath("Science Center", "Keohane Sports Center");
+    // System.out.println();
+    // w.getShortestPath("Science Center", "Lulu Campus Center");
+    // System.out.println();
+    // w.getShortestPath("Science Center", "Quint");
+    // System.out.println();
+    // w.getShortestPath("Science Center", "Tower Court");
+    
+    w.getShortestPath("Tower Court", "Academic Quad");
+    // System.out.println();
+    // w.getShortestPath("Tower Court", "Clapp Library");
+    // System.out.println();
+    // w.getShortestPath("Tower Court", "Keohane Sports Center");
+    // System.out.println();
+    // w.getShortestPath("Tower Court", "Lulu Campus Center");
+    // System.out.println();
+    // w.getShortestPath("Tower Court", "Quint");
+    // System.out.println();
+    // w.getShortestPath("Tower Court", "Science Center");
+  }
+}
